@@ -1,23 +1,50 @@
-import React, { createContext } from "react";
+import React, { createContext, useContext } from "react";
+import useReducerWithSideEffects, {
+  UpdateWithSideEffect,
+  Update
+} from "use-reducer-with-side-effects";
+import { getStorageItem, setStorageItem } from "utils/useLocalStorage";
 
-const initialState = {
- jwtToken: "",
-};
-
-const AppContext = createContext(initialState); // 디폴트
+const AppContext = createContext();
 
 const reducer = (prevState, action) => {
-    return prevState;
+  const { type } = action;
+
+  if (type === SET_TOKEN) {
+    const { payload: jwtToken } = action;
+    const newState = { ...prevState, jwtToken, isAuthenticated: true };
+    return UpdateWithSideEffect(newState, (state, dispatch) => {
+      setStorageItem("jwtToken", jwtToken);
+    });
+  } else if (type === DELETE_TOKEN) {
+    const newState = { ...prevState, jwtToken: "", isAuthenticated: false };
+    return UpdateWithSideEffect(newState, (state, dispatch) => {
+      setStorageItem("jwtToken", "");
+    });
+  }
+
+  return prevState;
 };
 
-export const AppProvider = ({ children }) => { // 외부에서 사용할 수 있게 설정
-    const [store, dispatch] = useReducer(reducer, initialState);
-    return (
-        <AppContext.Provider value = {{ store, dispatch}}>
-            {children}
-        </AppContext.Provider>
-    );
+export const AppProvider = ({ children }) => {
+  const jwtToken = getStorageItem("jwtToken", "");
+  const [store, dispatch] = useReducerWithSideEffects(reducer, {
+    jwtToken,
+    isAuthenticated: jwtToken.length > 0
+  });
+  return (
+    <AppContext.Provider value={{ store, dispatch }}>
+      {children}
+    </AppContext.Provider>
+  );
 };
 
 export const useAppContext = () => useContext(AppContext);
 
+// Actions
+const SET_TOKEN = "APP/SET_TOKEN";
+const DELETE_TOKEN = "APP/DELETE_TOKEN";
+
+// Action Creators
+export const setToken = token => ({ type: SET_TOKEN, payload: token });
+export const deleteToken = () => ({ type: DELETE_TOKEN });

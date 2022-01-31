@@ -12,3 +12,4 @@ class SignupView(CreateAPIView):
         AllowAny,
     ]
 
+
