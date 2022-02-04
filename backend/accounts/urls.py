@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path
 from rest_framework_jwt.views import (
     obtain_jwt_token,
@@ -5,6 +7,7 @@ from rest_framework_jwt.views import (
     verify_jwt_token
 )
 from . import views
+
 
 urlpatterns = [
     path('signup/', views.SignupView.as_view(), name='signup'),
